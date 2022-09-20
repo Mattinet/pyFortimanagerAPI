@@ -158,7 +158,7 @@ class FortiManager:
         return add_device.json()
 
     def add_model_device(self, name, serial_no, username="admin", password="", os_ver=6, mr=4, os_type="fos",
-                         platform=""):
+                        platform=""):
         # remove nonblocking from flags. With non-blocking the returned status looks like this even when the job failed, 
         # since the creation status of the job is returned:
         # [{'data': {'pid': 20172, 'taskid': 3194}, 'status': {'code': 0, 'message': 'OK'}, 'url': 'dvm/cmd/add/device'}]
@@ -336,6 +336,22 @@ class FortiManager:
         assign_meta_vdom = session.post(
             self.base_url, json=payload, verify=self.verify)
         return assign_meta_vdom.json()
+
+    def set_prefer_img_ver_to_model_device(self, device, vdom, prefer_img_ver):
+        """
+        Set preferred image version to the device
+        :param device: name of the device
+        :param prefer_img_ver: preferred image version, e.g. 7.0.6-b366
+        :return: returns response from FortiManager API whether the request was successful or not.!
+        """
+        session = self.login()
+        payload = {"method": "update",
+                   "params": [{"url": f"/dvmdb/adom/root/device/{device}/vdom/{vdom}",
+                               "data": {"name": f"{device}", "prefer_img_ver": prefer_img_ver}}]}
+        payload.update({"session": self.sessionid})
+        set_image_ver = session.post(
+            self.base_url, json=payload, verify=self.verify)
+        return set_image_ver.json()       
 
     # Firewall Object Methods
     def get_firewall_address_objects(self, name=False):
