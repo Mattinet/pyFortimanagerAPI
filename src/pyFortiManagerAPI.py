@@ -346,12 +346,97 @@ class FortiManager:
         """
         session = self.login()
         payload = {"method": "update",
-                   "params": [{"url": f"/dvmdb/adom/root/device/{device}/vdom/{vdom}",
-                               "data": {"name": f"{device}", "prefer_img_ver": prefer_img_ver}}]}
+                   "params": [{"url": f"/dvmdb/adom/root/device/{device}",
+                               "data": {"name": f"{device}", "prefer_img_ver": f"{prefer_img_ver}"}}]}
         payload.update({"session": self.sessionid})
         set_image_ver = session.post(
             self.base_url, json=payload, verify=self.verify)
         return set_image_ver.json()       
+
+    def associate_cli_template_to_device(self, device, template, vdom="root", provision="disable"):
+        """
+        Associate cli template to device
+        :param device: name of the device
+        :param template: name of template group
+        :param vdom: vdom the cli template should be associated to, by default 'root'
+        :param provision: by default 'disable', set to 'enable' if assigning pre-run template
+        :return: returns response from FortiManager API whether the request was successful or not.!
+        """
+        #First, we must get the currently associated devices.
+        session = self.login()
+        """payload1 = {"method": "get",
+                   "params": [{"url": f"/pm/config/adom/root/obj/cli/template-group/{tmplgrp}",
+                               "option": "scope member"}]}
+        payload1.update({"session": self.sessionid})
+        current_members = session.post(
+            self.base_url, json=payload1, verify=self.verify).json()
+        print(current_members)
+        #Check if there template has been assigned to any firewalls and append new firewall 
+        #to the list. If not, initiate the list and append.
+        if "scope member" in current_members["result"][0]["data"]:
+            members = current_members["result"][0]["data"]["scope member"]
+        else:
+            members = []
+        members.append({"name": f"{device}", "vdom": "root"})
+        print(members)
+        """#Second, add the new device to the group, along with the old devices
+        payload2 = {"method": "update",
+                   "params": [{"url": f"/pm/config/adom/root/obj/cli/template",
+                               "data": {"name": f"{template}", "provision": provision, "scope member": [{ "name": device, "vdom": vdom}]}}]}
+        payload2.update({"session": self.sessionid})
+        associate_clitemplate = session.post(
+            self.base_url, json=payload2, verify=self.verify)
+        return associate_clitemplate.json()     
+
+    def associate_cli_templategroup_to_device(self, device, tmplgrp):
+        """
+        Associate cli template group to device
+        :param device: name of the device
+        :param tmplgrp: name of template group
+        :return: returns response from FortiManager API whether the request was successful or not.!
+        """
+        #First, we must get the currently associated devices.
+        session = self.login()
+        payload1 = {"method": "get",
+                   "params": [{"url": f"/pm/config/adom/root/obj/cli/template-group/{tmplgrp}",
+                               "option": "scope member"}]}
+        payload1.update({"session": self.sessionid})
+        current_members = session.post(
+            self.base_url, json=payload1, verify=self.verify).json()
+        print(current_members)
+        #Check if there template has been assigned to any firewalls and append new firewall 
+        #to the list. If not, initiate the list and append.
+        if "scope member" in current_members["result"][0]["data"]:
+            members = current_members["result"][0]["data"]["scope member"]
+        else:
+            members = []
+        members.append({"name": f"{device}", "vdom": "root"})
+        print(members)
+        #Second, add the new device to the group, along with the old devices
+        payload2 = {"method": "update",
+                   "params": [{"url": f"/pm/config/adom/root/obj/cli/template-group",
+                               "data": {"name": f"{tmplgrp}", "scope member": members}}]}
+        payload2.update({"session": self.sessionid})
+        associate_tmplgrp = session.post(
+            self.base_url, json=payload2, verify=self.verify)
+        return associate_tmplgrp.json()     
+
+#Below can't get to work
+    #def associate_template_group_to_device(self, device, tmplgrp):
+    #    """
+    #    Associate template group to device
+    #    :param device: name of the device
+    #    :param tmplgrp: name of template group
+    #    :return: returns response from FortiManager API whether the request was successful or not.!
+    #    """
+    #    session = self.login()
+    #    payload = {"method": "update",
+    #               "params": [{"url": f"/pm/tmplgrp/adom/root",
+    #                           "data": {"name": f"{tmplgrp}", "type": "tmplgrp", "scope member": [{"name": f"{device}", "vdom": "root"}], "template group setting": {"cliprofs": ["SPOKE_FI - office"], "templates":["5__lte_office_without_MGMT"]}, "description": "", "fspprofs":[], "fxtprofs":[]}}]}
+    #    payload.update({"session": self.sessionid})
+    #    associate_tmplgrp = session.post(
+    #        self.base_url, json=payload, verify=self.verify)
+    #    return associate_tmplgrp.json()     
 
     # Firewall Object Methods
     def get_firewall_address_objects(self, name=False):
