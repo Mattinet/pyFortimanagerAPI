@@ -8,7 +8,7 @@ from functools import wraps
 import requests
 import urllib3
 import logging
-from typing import List
+from typing import Dict, List
 from os.path import join, normpath
 
 # Disable insecure connections warnings
@@ -262,7 +262,7 @@ class FortiManager:
         session = self.login()
         payload = \
             {"method": "add",
-             "params": [{"url": f"/pm/pkg/adom/{self.adom}/{pkg_name}/scope member",
+             "params": [{"url": f"pm/pkg/adom/{self.adom}/{pkg_name}/scope member",
                          "data": [{"name": f"{device_name}",
                                    "vdom": f"{vdom}"}]}]}
         payload.update({"session": self.sessionid})
@@ -302,18 +302,17 @@ class FortiManager:
             url=self.base_url, json=payload, verify=self.verify)
         return get_meta.json()
 
-    def assign_meta_to_device(self, device, meta_name, meta_value):
+    def assign_meta_to_device(self, device, meta_data=dict):
         """
         Assign a meta tag to the device
         :param device: name of the device
-        :param meta_name: name of the meta tag
-        :param meta_value: value of the meta tag
+        :param meta_data: A dictionary of meta name:value pairs (Note, values must be strings, not integers!)
         :return: returns response from FortiManager API whether the request was successful or not.!
         """
         session = self.login()
         payload = {"method": "update",
                    "params": [{"url": f"/dvmdb/adom/root/device/{device}",
-                               "data": {"name": f"{device}", "meta fields": {f"{meta_name}": f"{meta_value}"}}}]}
+                               "data": {"name": f"{device}", "meta fields": meta_data}}]}
         payload.update({"session": self.sessionid})
         assign_meta = session.post(
             self.base_url, json=payload, verify=self.verify)
@@ -938,6 +937,31 @@ class FortiManager:
                             "pkg": f"{package_name}"
                         },
                         "url": "securityconsole/install/package"
+                    }
+                ],
+                "session": self.sessionid
+            }
+        install_package = session.post(
+            url=self.base_url, json=payload, verify=self.verify)
+        return install_package.json()["result"]
+
+    def install_device(self, scope=list):
+        """
+        Install the policy package on your Forti-gate Firewalls
+        :param package_name: Enter the package name you wish to install
+        :return: Response of status code with data in JSON Format
+        """
+        session = self.login()
+        payload = \
+            {
+                "method": "exec",
+                "params": [
+                    {
+                        "data": {
+                            "adom": f"{self.adom}",
+                            "scope": scope
+                        },
+                        "url": "securityconsole/install/device"
                     }
                 ],
                 "session": self.sessionid
