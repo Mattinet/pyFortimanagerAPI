@@ -705,6 +705,30 @@ class FortiManager:
             url=self.base_url, json=payload, verify=False)
         return delete_address_group.json()["result"]
 
+    def add_dynamic_group_object(self, name, device, subnets=list, comment=None):
+        """
+        Add per device mapping in address object.
+        :param name: name of the address object.
+        :param device: name of the device which is to be mapped in this object
+        :param subnets: A list of (existing) object names for device that is to be mapped in this object.
+        :param comment: comment
+        :return: returns response of the request from FortiManager.
+        """
+        session = self.login()
+#        add_obj = self.add_firewall_address_object(
+#            name, subnet=["0.0.0.0", "255.255.255.255"])
+        payload = {
+            "method": "add",
+            "params": [{"url": f"pm/config/adom/{self.adom}/obj/firewall/addrgrp/{name}/dynamic_mapping",
+                        "data": [{"_scope": [{"name": f"{device}", "vdom": "root"}],
+                                  "member": subnets,
+                                  "comment": f"{comment}",
+                                  }]}],
+            "session": self.sessionid}
+        add_dynamic_grp_obj = session.post(
+            url=self.base_url, json=payload, verify=self.verify)
+        return add_dynamic_grp_obj.json()["result"]
+
     # Firewall Virtual IP objects
     def get_firewall_vip_objects(self, name=False):
         """
