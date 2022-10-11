@@ -944,12 +944,13 @@ class FortiManager:
             url=self.base_url, json=payload, verify=self.verify)
         return move_policy.json()["result"]
 
-    def install_policy_package(self, package_name):
+    def install_policy_package(self, package_name, scope, flags=List):
         """
         Install the policy package on your Forti-gate Firewalls
         :param package_name: Enter the package name you wish to install
         :return: Response of status code with data in JSON Format
         """
+        #flags=[]
         session = self.login()
         payload = \
             {
@@ -958,13 +959,16 @@ class FortiManager:
                     {
                         "data": {
                             "adom": f"{self.adom}",
-                            "pkg": f"{package_name}"
+                            "pkg": f"{package_name}",
+                            "flags": flags,
+                            "scope": [scope]
                         },
                         "url": "securityconsole/install/package"
                     }
                 ],
                 "session": self.sessionid
             }
+        print(payload)
         install_package = session.post(
             url=self.base_url, json=payload, verify=self.verify)
         return install_package.json()["result"]
